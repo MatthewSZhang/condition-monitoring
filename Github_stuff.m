@@ -20,6 +20,7 @@ git commit -m "Initial commit of a MATLAB file"
 
 5. Indicate the destination of the file:
 git remote add origin https://github.com/cs229-ML/condition-monitoring.git
+(you only need to do this once, afterward, the "origin already exists"
 
 6. Push (send) the file over to the "origin", which is our github 
 repository:
