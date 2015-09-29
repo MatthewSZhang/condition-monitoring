@@ -1,10 +1,11 @@
 %% Sample MATLAB code editing
+% Testing, testing, 1, 2, 3 -CMD
 
 %% Pulling the code from Github
 % I want to pull the code into my working directory
 
 %{
-1. In a new working directory I've just created, I have nothing there 
+1. In a new working directory I've just created, I have nothing there
 (mine is C:\Users\Simon\Github-machinelearning)
 
 2. Open the Git command line, and change directory to your working folder:
@@ -49,7 +50,7 @@ git commit -m "Initial commit of a MATLAB file"
 git remote add origin https://github.com/cs229-ML/condition-monitoring.git
 (you only need to do this once, afterward, the "origin already exists"
 
-6. Push (send) the file over to the "origin", which is our github 
+6. Push (send) the file over to the "origin", which is our github
 repository:
 git push -u origin master
 
