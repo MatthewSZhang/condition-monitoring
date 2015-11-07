@@ -1,3 +1,5 @@
+function [fnames, outmat] = select_features(M3freqdomain, M4freqdomain)
+
 frequencies = 0:2:1666*2;
 
 tempaccelXm3 = [M3freqdomain.accelX' ones(2325,1)];
