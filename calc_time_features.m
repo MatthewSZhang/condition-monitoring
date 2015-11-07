@@ -48,28 +48,28 @@ for idir = 1:3 % loop over x, y, z
     end % ibase
 end % idir
 % attach time stamp data
-f.time_stamp = s.time_stamp(1:sample_size:end)'; % string format
+f.time_stamp = s.time_stamp(1:sample_size:end); % string format
 dn = datenum(f.time_stamp);
 f.time_delta_days = dn - dn(1); % days since first time stamp
 
 
 function output = calc_feature(raw_data, feature, sample_size)
 % reshape data so that each column is one sample/batch
-data = reshape(raw_data, sample_size, []);
+data = reshape(raw_data, sample_size, [])';
 
 switch feature
     case 'rms'
-        output = sqrt(sum(data.^2, 1)/sample_size);
+        output = sqrt(sum(data.^2, 2)/sample_size);
     case 'peak'
-        output = max(data, [], 1);
+        output = max(data, [], 2);
     case 'mean'
-        output = mean(data, 1);
+        output = mean(data, 2);
     case 'var'
-        output = var(data, 1);
+        output = var(data, 0, 2);
     case 'kurtosis'
         mu = calc_feature(raw_data, 'mean', sample_size);
         sigma_sq = calc_feature(raw_data, 'var', sample_size);
-        output = mean((data - repmat(mu, sample_size, 1)).^4, 1) ./ (sigma_sq.^2);
+        output = mean((data - repmat(mu, 1, sample_size)).^4, 2) ./ (sigma_sq.^2);
     otherwise
         error([mfilename,':input'], 'Feature ''%s'' not recognized.', feature);
 end
