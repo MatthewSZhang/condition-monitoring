@@ -1,30 +1,32 @@
-function [fnames, outmat] = select_features(M3freqdomain, M4freqdomain)
+function [fnames, outmat] = select_features(M1_FXmat_acc, M1_FYmat_acc, 
+M1_FZmat_acc, M1_FXmat, M1_FYmat, M1_FZmat, SN41_FXmat_acc, SN41_FYmat_acc, 
+SN41_FZmat_acc, SN41_FXmat, SN41_FYmat, SN41_FZmat)
 
 frequencies = 0:2:1666*2;
 
-tempaccelXm3 = [M3freqdomain.accelX' ones(2325,1)];
-tempaccelXm4 = [M4freqdomain.accelX' zeros(1478,1)]; 
-tempaccelX = [tempaccelXm3; tempaccelXm4];
+tempaccelXm1 = [M1_FXmat_acc' ones(size(M1_FXmat_acc,2),1)];
+tempaccelXsn41 = [SN41_FXmat_acc' zeros(size(SN41_FXmat_acc,2),1)]; 
+tempaccelX = [tempaccelXm1; tempaccelXsn41];
 
-tempaccelYm3 = [M3freqdomain.accelY' ones(2325,1)];
-tempaccelYm4 = [M4freqdomain.accelY' zeros(1478,1)]; 
-tempaccelY = [tempaccelYm3; tempaccelYm4];
+tempaccelYm1 = [M1_FYmat_acc' ones(size(M1_FYmat_acc,2),1)];
+tempaccelYsn41 = [SN41_FYmat_acc' zeros(size(SN41_FYmat_acc,2),1)]; 
+tempaccelY = [tempaccelYm1; tempaccelYsn41];
 
-tempaccelZm3 = [M3freqdomain.accelZ' ones(2325,1)];
-tempaccelZm4 = [M4freqdomain.accelZ' zeros(1478,1)]; 
-tempaccelZ = [tempaccelZm3; tempaccelZm4];
+tempaccelZm1 = [M1_FZmat_acc' ones(size(M1_FZmat_acc,2),1)];
+tempaccelZsn41 = [SN41_FZmat_acc' zeros(size(SN41_FZmat_acc,2),1)]; 
+tempaccelZ = [tempaccelZm1; tempaccelZsn41];
 
-tempvelXm3 = [M3freqdomain.velX' ones(2325,1)];
-tempvelXm4 = [M4freqdomain.velX' zeros(1478,1)]; 
-tempvelX = [tempvelXm3; tempvelXm4];
+tempvelXm1 = [M1_FXmat' ones(size(M1_FXmat,2),1)];
+tempvelXsn41 = [SN41_FXmat' zeros(size(SN41_FXmat,2),1)]; 
+tempvelX = [tempvelXm1; tempvelXsn41];
 
-tempvelYm3 = [M3freqdomain.velY' ones(2325,1)];
-tempvelYm4 = [M4freqdomain.velY' zeros(1478,1)]; 
-tempvelY = [tempvelYm3; tempvelYm4];
+tempvelYm1 = [M1_FYmat' ones(size(M1_FYmat,2),1)];
+tempvelYsn41 = [SN41_FYmat' zeros(size(SN41_FYmat,2),1)]; 
+tempvelY = [tempvelYm1; tempvelYsn41];
 
-tempvelZm3 = [M3freqdomain.velZ' ones(2325,1)];
-tempvelZm4 = [M4freqdomain.velZ' zeros(1478,1)]; 
-tempvelZ = [tempvelZm3; tempvelZm4];
+tempvelZm1 = [M1_FZmat' ones(size(M1_FZmat,2),1)];
+tempvelZsn41 = [SN41_FZmat' zeros(size(SN41_FZmat,2),1)]; 
+tempvelZ = [tempvelZm1; tempvelZsn41];
 
 Rax = corr(tempaccelX);
 Ray = corr(tempaccelY);
@@ -44,7 +46,7 @@ plot(frequencies, Rax, 'b')
 plot(frequencies, Rvx, 'r')
 xlabel('Frequency (Hz)')
 ylabel('Correlation')
-legend({'Acceleration';'Velocity'});
+legend({'Acceleration'; 'Velocity'});
 title('Velocity and Acceleration in the X Direction')
 
 figure;
@@ -53,7 +55,7 @@ plot(frequencies, Ray, 'b')
 plot(frequencies, Rvy, 'r')
 xlabel('Frequency (Hz)')
 ylabel('Correlation')
-legend({'Acceleration';'Velocity'});
+legend({'Acceleration'; 'Velocity'});
 title('Velocity and Acceleration in the Y Direction')
 
 figure;
@@ -62,32 +64,33 @@ plot(frequencies, Raz, 'b')
 plot(frequencies, Rvz, 'r')
 xlabel('Frequency (Hz)')
 ylabel('Correlation')
-legend({'Acceleration';'Velocity'});
+legend({'Acceleration'; 'Velocity'});
 title('Velocity and Acceleration in the Z Direction')
 
 fnames = {};
 outmat = [];
-% grab features with abs(correlation) > 0.2
-indices_accelX = find(Rax > 0.2);
+corr_threshold = 0.52;
+% grab features with abs(correlation) > corr_threshold
+indices_accelX = find(Rax > corr_threshold);
 freqs = frequencies(indices_accelX);
 for i=1:length(freqs)
   fnames = [fnames; ['accelX_' num2str(freqs(i)) '_Hz']];
 end
 outmat = [outmat tempaccelX(:,indices_accelX)];
 
-indices_accelY = find(Ray > 0.2);
+indices_accelY = find(Ray > corr_threshold);
 freqs = frequencies(indices_accelY);
 for i=1:length(freqs)
   fnames = [fnames; ['accelY_' num2str(freqs(i)) '_Hz']];
 end
 outmat = [outmat tempaccelY(:,indices_accelY)];
 
-indices_accelZ = find(Raz > 0.2);
+indices_accelZ = find(Raz > corr_threshold);
 freqs = frequencies(indices_accelZ);
 for i=1:length(freqs)
   fnames = [fnames; ['accelZ_' num2str(freqs(i)) '_Hz']];
 end
 outmat = [outmat tempaccelZ(:,indices_accelZ)];
 
-fnames = [fnames; 'm3?'];
+fnames = [fnames; 'm1?'];
 outmat = [outmat tempaccelX(:,1668)];
