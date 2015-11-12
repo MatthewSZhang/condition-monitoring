@@ -45,7 +45,7 @@ for iset = 1:n_sets
                 if iset == n_sets
                     xlabel(strrep(features_to_plot{ifeat}, '_', ' '));
                     ylabel(strrep(features_to_plot{jfeat}, '_', ' '));
-                    if iplot == 1 && exist('var', 'labels')
+                    if iplot == 1 && exist('labels', 'var')
                         legend(labels, 'Location', 'best');
                     end
                 end
