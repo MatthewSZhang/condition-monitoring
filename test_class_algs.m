@@ -52,7 +52,8 @@ for ipct = 1:numel(train_pct) % loop over size of training set used
 
     % plot classification results on test set
     figure('Color', 'w');
-    plot(pihat, '*');
+    plot(pihat, '*'); hold on;
+    plot(m_test(1)*[1, 1], [0, 1], 'k--', 'LineWidth', 1.5);
     legend('M3', 'M4');
     grid on; xlabel('Sample #'); ylabel('Likelihood');
     title('Logistic Regression');
@@ -89,7 +90,7 @@ title(title_str);
 function [m3_mat, m4_mat, title_str] = proc_time_features(m3_features, m4_features)
 % weed out some data points (or not)
 title_str = 'Logistic Regression Error';
-test_case = 2;
+test_case = 3;
 switch test_case
     case 1
         max_data_age = 60; % use only first 60 days of data
@@ -115,10 +116,11 @@ m4_mat = struct2mat(m4_features);
 % % reorder rows to mix up data (so training and test sets will include a
 % % variety of data)
 % title_str = [title_str, ' (with Reordering)'];
+% m = [size(m3_mat, 1); size(m4_mat, 1)];
 % reorder_inds = reshape(1:floor(m(1)/3)*3, [], 3)';
-% m3_feat_mat = m3_feat_mat([reorder_inds(:); (floor(m(1)/3)*3:m(1))'], :);
+% m3_mat = m3_mat([reorder_inds(:); (floor(m(1)/3)*3:m(1))'], :);
 % reorder_inds = reshape(1:floor(m(2)/3)*3, [], 3)';
-% m4_feat_mat = m4_feat_mat([reorder_inds(:); (floor(m(2)/3)*3:m(2))'], :);
+% m4_mat = m4_mat([reorder_inds(:); (floor(m(2)/3)*3:m(2))'], :);
 
 
 
