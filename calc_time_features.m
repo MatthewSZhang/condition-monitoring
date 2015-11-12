@@ -47,10 +47,12 @@ for idir = 1:3 % loop over x, y, z
         end % ifeat
     end % ibase
 end % idir
-% attach time stamp data
-f.time_stamp = s.time_stamp(1:sample_size:end); % string format
-dn = datenum(f.time_stamp);
-f.time_delta_days = dn - dn(1); % days since first time stamp
+% attach time stamp data, if it is included
+if isfield(s, 'time_stamp')
+    f.time_stamp = s.time_stamp(1:sample_size:end); % string format
+    dn = datenum(f.time_stamp);
+    f.time_delta_days = dn - dn(1); % days since first time stamp
+end
 
 
 function output = calc_feature(raw_data, feature, sample_size)
