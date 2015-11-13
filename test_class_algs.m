@@ -19,6 +19,7 @@ elseif nargin == 1 % if we are passed in the outut of select_features
     m3_inds = logical(varargin{1}(:, end));
     m3_feat_mat = varargin{1}(m3_inds, 1:end-1);
     m4_feat_mat = varargin{1}(~m3_inds, 1:end-1);
+    title_str = 'Logistic Regression (Frequency Domain)';
 else
     error('Unexpected number of input arguments');
 end
@@ -52,9 +53,10 @@ for ipct = 1:numel(train_pct) % loop over size of training set used
 
     % plot classification results on test set
     figure('Color', 'w');
-    plot(pihat, '*'); hold on;
+    plot(pihat, '*'); hold on; xlim([0, numel(test_labels)]);
     plot(m_test(1)*[1, 1], [0, 1], 'k--', 'LineWidth', 1.5);
-    legend('M3', 'M4');
+    legend({'M3', 'M4'}, 'FontSize', 10);
+    set(gca, 'FontSize', 11);
     grid on; xlabel('Sample #'); ylabel('Likelihood');
     title('Logistic Regression');
     set(gcf, 'Name', 'Logistic Regression');
@@ -80,10 +82,10 @@ end
 
 % plot training error and test set error 
 figure('Color', 'w');
-plot(train_pct, [test_err_m3; test_err_m4; train_err_m3; train_err_m4], ...
-    'LineWidth', 1.5);
+plot(train_pct, [test_err_m3; train_err_m3], 'LineWidth', 1.5);
 grid on; xlabel('Percent of Data Used for Training'); ylabel('Error');
-legend('Test Error M3', 'Test Error M4', 'Training Error M3', 'Training Error M4');
+set(gca, 'FontSize', 11);
+legend('Test Error', 'Training Error', 'FontSize', 10);
 title(title_str);
 
 
