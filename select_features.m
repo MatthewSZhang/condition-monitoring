@@ -1,5 +1,5 @@
-function [fnames, outmat] = select_features(M1_FXmat_acc, M1_FYmat_acc, 
-M1_FZmat_acc, M1_FXmat, M1_FYmat, M1_FZmat, SN41_FXmat_acc, SN41_FYmat_acc, 
+function [fnames, outmat] = select_features(M1_FXmat_acc, M1_FYmat_acc, ...
+M1_FZmat_acc, M1_FXmat, M1_FYmat, M1_FZmat, SN41_FXmat_acc, SN41_FYmat_acc, ...
 SN41_FZmat_acc, SN41_FXmat, SN41_FYmat, SN41_FZmat)
 
 frequencies = 0:2:1666*2;
@@ -71,21 +71,21 @@ fnames = {};
 outmat = [];
 corr_threshold = 0.52;
 % grab features with abs(correlation) > corr_threshold
-indices_accelX = find(Rax > corr_threshold);
+indices_accelX = find(abs(Rax) > corr_threshold);
 freqs = frequencies(indices_accelX);
 for i=1:length(freqs)
   fnames = [fnames; ['accelX_' num2str(freqs(i)) '_Hz']];
 end
 outmat = [outmat tempaccelX(:,indices_accelX)];
 
-indices_accelY = find(Ray > corr_threshold);
+indices_accelY = find(abs(Ray) > corr_threshold);
 freqs = frequencies(indices_accelY);
 for i=1:length(freqs)
   fnames = [fnames; ['accelY_' num2str(freqs(i)) '_Hz']];
 end
 outmat = [outmat tempaccelY(:,indices_accelY)];
 
-indices_accelZ = find(Raz > corr_threshold);
+indices_accelZ = find(abs(Raz) > corr_threshold);
 freqs = frequencies(indices_accelZ);
 for i=1:length(freqs)
   fnames = [fnames; ['accelZ_' num2str(freqs(i)) '_Hz']];
