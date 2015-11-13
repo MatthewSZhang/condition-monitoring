@@ -91,22 +91,22 @@ title(title_str);
 
 function [m3_mat, m4_mat, title_str] = proc_time_features(m3_features, m4_features)
 % weed out some data points (or not)
-title_str = 'Logistic Regression Error';
-test_case = 3;
-switch test_case
-    case 1
-        max_data_age = 60; % use only first 60 days of data
-        title_str = [title_str, sprintf(', %d days', max_data_age)];
-    case 2
-        max_data_age = 95; % first 95 days
-        title_str = [title_str, sprintf(', %d days', max_data_age)];
-    case 3
-        max_data_age = Inf; % all the data
-end
-inds = m3_features.time_delta_days <= max_data_age;
-m3_features = filter_struct(m3_features, inds);
-inds = m4_features.time_delta_days <= max_data_age;
-m4_features = filter_struct(m4_features, inds);
+title_str = 'Logistic Regression';
+% test_case = 3;
+% switch test_case
+%     case 1
+%         max_data_age = 60; % use only first 60 days of data
+%         title_str = [title_str, sprintf(', %d days', max_data_age)];
+%     case 2
+%         max_data_age = 95; % first 95 days
+%         title_str = [title_str, sprintf(', %d days', max_data_age)];
+%     case 3
+%         max_data_age = Inf; % all the data
+% end
+% inds = m3_features.time_delta_days <= max_data_age;
+% m3_features = filter_struct(m3_features, inds);
+% inds = m4_features.time_delta_days <= max_data_age;
+% m4_features = filter_struct(m4_features, inds);
 
 % reformat for use in learning algorithms
 % first remove time stamp features
