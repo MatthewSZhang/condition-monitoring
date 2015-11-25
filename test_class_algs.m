@@ -48,7 +48,14 @@ for ipct = 1:numel(train_pct) % loop over size of training set used
         2*ones(m_test(2), 1)];           % m4 = 2;
 
     %% logistic regression
-    B = mnrfit(train_features, train_labels);
+    % standard (without regularization)
+%     B = mnrfit(train_features, train_labels);
+    
+    % with regularization
+    [B_lasso, FitInfo] = lassoglm(train_features, 2-train_labels, 'binomial');
+    icol = 1; B2 = [FitInfo.Intercept(icol); B_lasso(:, icol)];
+    B = B2;
+    
     pihat = mnrval(B, test_features);
 
     % plot classification results on test set
@@ -61,6 +68,14 @@ for ipct = 1:numel(train_pct) % loop over size of training set used
     title('Logistic Regression');
     set(gcf, 'Name', 'Logistic Regression');
 
+%     % plot coefficients found by lasso GLM
+%     figure('Color', 'w');
+%     plot(B);
+%     grid on; set(gca, 'FontSize', 11);
+%     xlim([0, 1667]);
+%     xlabel('Frequency (Hz)');
+%     ylabel('Lasso GLM Coefficient');
+    
     % this should work but doesn't due to NaNs
     % err_m3 = sum(round(pihat(:, 1)) ~= (test_labels ~= 2)) / sum(m_test)
     % err_m4 = sum(round(pihat(:, 2)) ~= (test_labels == 2)) / sum(m_test)
@@ -85,7 +100,7 @@ figure('Color', 'w');
 plot(train_pct, [test_err_m3; train_err_m3], 'LineWidth', 1.5);
 grid on; xlabel('Percent of Data Used for Training'); ylabel('Error');
 set(gca, 'FontSize', 11);
-legend('Test Error', 'Training Error', 'FontSize', 10);
+legend({'Test Error', 'Training Error'}, 'FontSize', 10);
 title(title_str);
 
 
