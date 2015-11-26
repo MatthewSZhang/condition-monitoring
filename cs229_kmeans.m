@@ -1,4 +1,4 @@
-function [cluster_ids, centroids, GMModel] = cs229_kmeans(k, feat_struct)
+function [cluster_ids, closest_centroid_ind] = cs229_kmeans(k, feat_struct)
 %CS229_KMEANS is pretty self explanatory
 % I couldn't think of what to name this function other than kmeans, but 
 % that name was already taken!
@@ -64,21 +64,18 @@ for icol = 1:size(feat_mat, 2)
 end
 dist = centroids - repmat(ref_point, k, 1);
 dist = sqrt(sum(dist.^2, 2));
-[~, closest_centroid_ind] = min(dist)
-closest_centroid = centroids(closest_centroid_ind, :)
+[~, closest_centroid_ind] = min(dist);
+closest_centroid = centroids(closest_centroid_ind, :);
 
-% filter data to include only points from the expected "normal" cluster
-filter_inds = cluster_ids == closest_centroid_ind;
-filtered_feat_mat = feat_mat(filter_inds, :);
-% fit a mixture of gaussians model to the filtered data
-GMModel = fitgmdist(filtered_feat_mat, k);
-glm_clusters = cluster(GMModel, filtered_feat_mat);
-% plot some data color-coded by cluster
-title_str = sprintf('Gaussian Mixture Model Categorization (k = %d)', k);
-plot_categorized_data(glm_clusters, filter_struct(feat_struct, filter_inds), title_str);
-
-% --
-% function analyze_clusters(
+% % filter data to include only points from the expected "normal" cluster
+% filter_inds = cluster_ids == closest_centroid_ind;
+% filtered_feat_mat = feat_mat(filter_inds, :);
+% % fit a mixture of gaussians model to the filtered data
+% GMModel = fitgmdist(filtered_feat_mat, k);
+% glm_clusters = cluster(GMModel, filtered_feat_mat);
+% % plot some data color-coded by cluster
+% title_str = sprintf('Gaussian Mixture Model Categorization (k = %d)', k);
+% plot_categorized_data(glm_clusters, filter_struct(feat_struct, filter_inds), title_str);
 
 % --
 function plot_categorized_data(labels, feat_struct, title_str)
