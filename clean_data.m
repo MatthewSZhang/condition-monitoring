@@ -1,4 +1,4 @@
-function data = clean_data(data, rms_z_vel, machine)
+function [data, good_inds] = clean_data(data, rms_z_vel, machine)
 
 switch lower(machine)
     case 'm1'
