@@ -14,50 +14,25 @@ if nargout == 3
     do_plots = false;
 end
 
-% % reformat for use in learning algorithms
-% feat_mat = struct2mat(remove_time_stamp(feat_struct));
-
-% feat_subset.rms_x_acc = feat_struct.rms_x_acc;
-% feat_subset.rms_y_acc = feat_struct.rms_y_acc;
-% feat_subset.rms_z_acc = feat_struct.rms_z_acc;
+% pull out pre-selected features to use
 feat_subset.rms_x_vel = feat_struct.rms_x_vel;
 feat_subset.rms_y_vel = feat_struct.rms_y_vel;
 feat_subset.rms_z_vel = feat_struct.rms_z_vel;
 
-% fnames = fieldnames(feat_struct);
-% fnames(cellfun(@isempty, strfind(fnames, 'vel'))) = [];
-% fnames(~cellfun(@isempty, strfind(fnames, 'kurtosis'))) = [];
-% for ifield = 1:numel(fnames)
-%     feat_subset.(fnames{ifield}) = feat_struct.(fnames{ifield});
-%     for jfield = ifield:numel(fnames)
-%         feat_subset.(fnames{jfield}) = feat_struct.(fnames{jfield});
-        feat_mat = struct2mat(feat_subset);
+% reformat for use in learning algorithms
+feat_mat = struct2mat(feat_subset);
 
-%         fprintf(1, 'Using features %s and %s...\n', fnames{ifield}, fnames{jfield});
-        % run kmeans
-%         rng(1); % for reproducibility
-        [cluster_ids, centroids] = kmeans(feat_mat, k);
+% run kmeans
+[cluster_ids, centroids] = kmeans(feat_mat, k);
         
-        if ~isfield(feat_struct, 'rms_x_acc')
-            return;
-        end
-        if do_plots
-            % plot some data color-coded by cluster
-            title_str = sprintf('Kmeans Categorization (k = %d)', k);
-            plot_categorized_data(cluster_ids, feat_struct, title_str)
-        end
+if do_plots && isfield(feat_struct, 'rms_x_acc')
+    % plot some data color-coded by cluster
+    title_str = sprintf('Kmeans Categorization (k = %d)', k);
+    plot_categorized_data(cluster_ids, feat_struct, title_str)
+end
 
-%         feat_subset = rmfield(feat_subset, fnames{jfield});
-%     end
-%     if isfield(feat_subset, fnames{ifield})
-%         feat_subset = rmfield(feat_subset, fnames{ifield});
-%     end
-% end
 
 % guess which cluster has the most normal data points in it
-% data_median = median(feat_mat, 1);
-% data_pctile = prctile(feat_mat, [20, 80], 1);
-% data_mean = mean(feat_mat, 1);
 ref_point = nan(1, size(feat_mat, 2));
 for icol = 1:size(feat_mat, 2)
     % make histogram of the data for this feature using 50 bins
@@ -79,15 +54,12 @@ fprintf(1, 'Reference point: [%.2f, %.2f, %.2f]\n', ref_point(1), ref_point(2), 
 closest = centroids(closest_ind, :);
 fprintf(1, 'Closest centroid: [%.2f, %.2f, %.2f]\n', closest(1), closest(2), closest(3));
 
-% % filter data to include only points from the expected "normal" cluster
-% filter_inds = cluster_ids == closest_ind;
-% filtered_feat_mat = feat_mat(filter_inds, :);
-% % fit a mixture of gaussians model to the filtered data
-% GMModel = fitgmdist(filtered_feat_mat, k);
-% glm_clusters = cluster(GMModel, filtered_feat_mat);
-% % plot some data color-coded by cluster
-% title_str = sprintf('Gaussian Mixture Model Categorization (k = %d)', k);
-% plot_categorized_data(glm_clusters, filter_struct(feat_struct, filter_inds), title_str);
+if norm_min_dist > 0.4
+    % filter data to include only points from the expected "normal" cluster
+    filter_inds = cluster_ids == closest_ind;
+    filtered_feat_mat = feat_mat(filter_inds, :);
+end
+
 
 % --
 function plot_categorized_data(labels, feat_struct, title_str)
