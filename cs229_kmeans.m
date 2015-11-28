@@ -1,4 +1,4 @@
-function [cluster_ids, closest_centroid_ind] = cs229_kmeans(k, feat_struct)
+function [cluster_ids, closest_ind, norm_min_dist] = cs229_kmeans(k, feat_struct)
 %CS229_KMEANS is pretty self explanatory
 % I couldn't think of what to name this function other than kmeans, but 
 % that name was already taken!
@@ -8,6 +8,11 @@ function [cluster_ids, closest_centroid_ind] = cs229_kmeans(k, feat_struct)
 % 
 % Note: plot after clustering won't work unless feat_struct has features
 %   time_delta_days and rms_x_acc
+
+do_plots = true;
+if nargout == 3
+    do_plots = false;
+end
 
 % % reformat for use in learning algorithms
 % feat_mat = struct2mat(remove_time_stamp(feat_struct));
@@ -36,9 +41,11 @@ feat_subset.rms_z_vel = feat_struct.rms_z_vel;
         if ~isfield(feat_struct, 'rms_x_acc')
             return;
         end
-        % plot some data color-coded by cluster
-        title_str = sprintf('Kmeans Categorization (k = %d)', k);
-        plot_categorized_data(cluster_ids, feat_struct, title_str)
+        if do_plots
+            % plot some data color-coded by cluster
+            title_str = sprintf('Kmeans Categorization (k = %d)', k);
+            plot_categorized_data(cluster_ids, feat_struct, title_str)
+        end
 
 %         feat_subset = rmfield(feat_subset, fnames{jfield});
 %     end
@@ -64,11 +71,16 @@ for icol = 1:size(feat_mat, 2)
 end
 dist = centroids - repmat(ref_point, k, 1);
 dist = sqrt(sum(dist.^2, 2));
-[~, closest_centroid_ind] = min(dist);
-closest_centroid = centroids(closest_centroid_ind, :);
+[min_dist, closest_ind] = min(dist);
+fprintf(1, 'Minimum distance: %.2f\n', min_dist);
+norm_min_dist = min_dist/norm(ref_point);
+fprintf(1, 'Normalized: %.2f\n', norm_min_dist);
+fprintf(1, 'Reference point: [%.2f, %.2f, %.2f]\n', ref_point(1), ref_point(2), ref_point(3));
+closest = centroids(closest_ind, :);
+fprintf(1, 'Closest centroid: [%.2f, %.2f, %.2f]\n', closest(1), closest(2), closest(3));
 
 % % filter data to include only points from the expected "normal" cluster
-% filter_inds = cluster_ids == closest_centroid_ind;
+% filter_inds = cluster_ids == closest_ind;
 % filtered_feat_mat = feat_mat(filter_inds, :);
 % % fit a mixture of gaussians model to the filtered data
 % GMModel = fitgmdist(filtered_feat_mat, k);
