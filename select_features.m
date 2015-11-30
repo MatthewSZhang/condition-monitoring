@@ -1,12 +1,36 @@
-function [fnames, outmat] = select_features(M1_FZmat, SN41_FZmat)
+function [freqs, outmat] = select_features(varargin)
+%
+% Usage: 
+%   [freqs, outmat] = select_features(M1_FZvelgood, M3_FZvelgood, ...);
+%
+% Inputs:
+%   M1_FZvelgood, M3_FZvelgood, ... = two or more matrices of features,
+%       sized [n x m], where n = # of features and m = # of examples
+%
+% Outputs:
+%   freqs = frequencies, sorted in descending order of abs correlation
+%   outmat = all feature data, sorted in descending order of abs
+%       correlation, with data label tacked on as last feature
 
 frequencies = 0:2:1666*2;
 
-tempvelZm1 = [M1_FZmat' ones(size(M1_FZmat,2),1)];
-tempvelZsn41 = [SN41_FZmat' zeros(size(SN41_FZmat,2),1)]; 
-tempvelZ = [tempvelZm1; tempvelZsn41];
+% if numel(varargin{end}) == 1
+%     n_features = varargin{end};
+%     varargin(end) = [];
+%     frac_features = n_features/1667;
+% else
+%     frac_features = 0.2;
+% end
+n_cats = numel(varargin);
+m = zeros(n_cats, 1); % m(i) = # training examples for ith category
+labels = [];
+for icat = 1:n_cats
+    m(icat) = size(varargin{icat}, 2);
+    labels = [labels; icat*ones(m(icat), 1)];
+end
+feature_data = [varargin{:}]';
 
-Rvz = corr(tempvelZ);
+Rvz = corr([feature_data, labels]);
 Rvz = Rvz(1:1667,1668);
 
 figure;
@@ -19,16 +43,11 @@ ylabel('Correlation')
 % title('Velocity and Acceleration in the Z Direction')
 title('Velocity in the Z Direction')
 
-fnames = {};
-outmat = [];
-corr_threshold = 0.7;
-% grab features with abs(correlation) > corr_threshold
-indices_velZ = find(abs(Rvz) > corr_threshold);
-freqs = frequencies(indices_velZ);
-for i=1:length(freqs)
-  fnames = [fnames; ['velZ' num2str(freqs(i)) '_Hz']];
-end
-outmat = [outmat tempvelZ(:,indices_velZ)];
+[~, rank_inds] = sort(abs(Rvz), 'descend');
+% sort features by descending abs(correlation)
+freqs = frequencies(rank_inds);
+%fnames = strcat('velZ', num2str(freqs')); , {'_Hz'});
+outmat = feature_data(:, rank_inds);
 
-fnames = [fnames; 'm1?'];
-outmat = [outmat tempvelZ(:,1668)];
+%fnames = [fnames; 'label'];
+outmat = [outmat, labels];
