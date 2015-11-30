@@ -22,12 +22,18 @@ feat_subset.rms_z_vel = feat_struct.rms_z_vel;
 % reformat for use in learning algorithms
 feat_mat = struct2mat(feat_subset);
 
-% run kmeans
-[cluster_ids, centroids] = kmeans(feat_mat, k);
+% % run kmeans
+% [cluster_ids, centroids] = kmeans(feat_mat, k);
+% title_str = sprintf('Mixture of Gaussians Categorization (k = %d)', k);
+
+% fit a mixture of gaussians model to the filtered data
+GMModel = fitgmdist(feat_mat, k);
+cluster_ids = cluster(GMModel, feat_mat);
+centroids = GMModel.mu;
+title_str = sprintf('Mixture of Gaussians Categorization (k = %d)', k);
         
 if do_plots && isfield(feat_struct, 'rms_x_acc')
     % plot some data color-coded by cluster
-    title_str = sprintf('Kmeans Categorization (k = %d)', k);
     plot_categorized_data(cluster_ids, feat_struct, title_str)
 end
 
@@ -53,12 +59,6 @@ fprintf(1, 'Normalized: %.2f\n', norm_min_dist);
 fprintf(1, 'Reference point: [%.2f, %.2f, %.2f]\n', ref_point(1), ref_point(2), ref_point(3));
 closest = centroids(closest_ind, :);
 fprintf(1, 'Closest centroid: [%.2f, %.2f, %.2f]\n', closest(1), closest(2), closest(3));
-
-if norm_min_dist > 0.4
-    % filter data to include only points from the expected "normal" cluster
-    filter_inds = cluster_ids == closest_ind;
-    filtered_feat_mat = feat_mat(filter_inds, :);
-end
 
 
 % --
