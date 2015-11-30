@@ -1,73 +1,72 @@
-function test_class_algs(varargin)
+function [test_err, train_err] = test_class_algs(varargin)
 
-%% load data (and maybe calculate features)
-if nargin == 0 % calculate features from vibration data
-    s = load('vibration_datasets\m3_vibration_waveform_data.mat');
-    m3_features = calc_time_features(s);
-    clear s
-    s = load('vibration_datasets\m4_vibration_waveform_data.mat');
-    m4_features = calc_time_features(s);
-    clear s
-    [m3_feat_mat, m4_feat_mat, title_str] = proc_time_features(m3_features, m4_features);
-    clear m3_features m4_features
-elseif nargin == 2 % load pre-calculated features
-    m3_features = varargin{1};
-    m4_features = varargin{2};
-    [m3_feat_mat, m4_feat_mat, title_str] = proc_time_features(m3_features, m4_features);
-    clear m3_features m4_features
-elseif nargin == 1 % if we are passed in the outut of select_features
-    m3_inds = logical(varargin{1}(:, end));
-    m3_feat_mat = varargin{1}(m3_inds, 1:end-1);
-    m4_feat_mat = varargin{1}(~m3_inds, 1:end-1);
-    title_str = 'Logistic Regression (Frequency Domain)';
+%% load data 
+if islogical(varargin{end})
+    do_plots = varargin{end};
+    varargin(end) = [];
 else
-    error('Unexpected number of input arguments');
+    do_plots = true;
 end
-
-% get total number of data points for m3 and m4
-m = [size(m3_feat_mat, 1); size(m4_feat_mat, 1)];
+if isstruct(varargin{1}) % time domain features
+    [feature_data, labels, m, title_str] = proc_time_features(varargin);
+    n_cats = numel(m);
+else % frequency domain features (output of select_features)
+    [feature_data, labels, m, n_cats, title_str] = proc_freq_features(varargin{1}, varargin{2});
+end
 
 %% separate into traning and test sets
 train_pct = 0.2:0.1:0.7; 
 test_pct  = 0.3;
 
-test_err_m3 = zeros(size(train_pct)); % initialize error (to be calculated later)
-test_err_m4 = test_err_m3; 
-train_err_m3 = test_err_m3;
-train_err_m4 = test_err_m3; 
+% testing set inputs
+m_test = ceil(m * test_pct); % # examples for testing stays the same
+test_inds = [];
+start_ind = 0;
+for icat = 1:n_cats
+    test_inds = [test_inds, start_ind + ((m(icat)-m_test(icat)):m(icat))];
+    start_ind = start_ind + m(icat);
+end
+test_features = feature_data(test_inds, :); 
+test_labels = labels(test_inds); 
+
+test_err = zeros(1, numel(train_pct)); % initialize error (to be calculated later)
+train_err = test_err; 
 for ipct = 1:numel(train_pct) % loop over size of training set used
-    m_train = floor(m * train_pct(ipct)); % changes
-    m_test = ceil(m * test_pct); % stays the same
-    train_features = [m3_feat_mat(1:m_train(1), :); m4_feat_mat(1:m_train(2), :)];
-    train_labels = [1*ones(m_train(1), 1);  % m3 = 1
-        2*ones(m_train(2), 1)];             % m4 = 2
-    % testing set inputs
-    test_features = [m3_feat_mat(end-m_test(1)+1:end, :); 
-        m4_feat_mat(end-m_test(2)+1:end, :)];
-    test_labels = [1*ones(m_test(1), 1); % m3 = 1 
-        2*ones(m_test(2), 1)];           % m4 = 2;
+    m_train = floor(m * train_pct(ipct)); % # examples for training changes
+    train_inds = [];
+    start_ind = 0;
+    for icat = 1:n_cats
+        train_inds = [train_inds, start_ind + (m(icat)-m_train(icat):m(icat))];
+        start_ind = start_ind + m(icat);
+    end
+    train_features = feature_data(train_inds, :); 
+    train_labels = labels(train_inds); 
 
     %% logistic regression
     % standard (without regularization)
-%     B = mnrfit(train_features, train_labels);
+    B = mnrfit(train_features, train_labels);
     
-    % with regularization
-    [B_lasso, FitInfo] = lassoglm(train_features, 2-train_labels, 'binomial');
-    icol = 1; B2 = [FitInfo.Intercept(icol); B_lasso(:, icol)];
-    B = B2;
+%     % with regularization
+%     [B_lasso, FitInfo] = lassoglm(train_features, 2-train_labels, 'binomial');
+%     icol = 1; B2 = [FitInfo.Intercept(icol); B_lasso(:, icol)];
+%     B = B2;
     
     pihat = mnrval(B, test_features);
+    [~, category_ids] = max(pihat, [], 2);
 
-    % plot classification results on test set
-    figure('Color', 'w');
-    plot(pihat, '*'); hold on; xlim([0, numel(test_labels)]);
-    plot(m_test(1)*[1, 1], [0, 1], 'k--', 'LineWidth', 1.5);
-    legend({'M3', 'M4'}, 'FontSize', 10);
-    set(gca, 'FontSize', 11);
-    grid on; xlabel('Sample #'); ylabel('Likelihood');
-    title('Logistic Regression');
-    set(gcf, 'Name', 'Logistic Regression');
-
+    if do_plots
+        % plot classification results on test set
+        figure('Color', 'w');
+        plot(pihat, '*'); hold on; xlim([0, numel(test_labels)]);
+        for idiv = 1:n_cats-1
+            plot(sum(m_test(1:idiv))*[1, 1], [0, 1], 'k--', 'LineWidth', 1.5);
+        end
+        legend({'M1', 'M3', 'M4', 'SN41'}, 'FontSize', 10);
+        set(gca, 'FontSize', 11);
+        grid on; xlabel('Sample #'); ylabel('Likelihood');
+        title(title_str);
+        set(gcf, 'Name', 'Logistic Regression');
+    end
 %     % plot coefficients found by lasso GLM
 %     figure('Color', 'w');
 %     plot(B);
@@ -75,69 +74,79 @@ for ipct = 1:numel(train_pct) % loop over size of training set used
 %     xlim([0, 1667]);
 %     xlabel('Frequency (Hz)');
 %     ylabel('Lasso GLM Coefficient');
-    
-    % this should work but doesn't due to NaNs
-    % err_m3 = sum(round(pihat(:, 1)) ~= (test_labels ~= 2)) / sum(m_test)
-    % err_m4 = sum(round(pihat(:, 2)) ~= (test_labels == 2)) / sum(m_test)
 
     % save off test set error
-    test_err_m3(ipct) = (sum(pihat(1:m_test(1), 1) < 0.5) + ...
-        sum(pihat(m_test(1)+1:end, 1) >= 0.5)) / sum(m_test);
-    test_err_m4(ipct) = (sum(pihat(1:m_test(1), 2) >= 0.5) + ...
-        sum(pihat(m_test(1)+1:end, 2) < 0.5)) / sum(m_test);
+    test_err(ipct) = sum(category_ids ~= test_labels) / sum(m_test);
     
     % calculate and save training set error
     pihat = mnrval(B, train_features);
-    train_err_m3(ipct) = (sum(pihat(1:m_train(1), 1) < 0.5) + ...
-        sum(pihat(m_train(1)+1:end, 1) >= 0.5)) / sum(m_train);
-    train_err_m4(ipct) = (sum(pihat(1:m_train(1), 2) >= 0.5) + ...
-        sum(pihat(m_train(1)+1:end, 2) < 0.5)) / sum(m_train);
+    [~, category_ids] = max(pihat, [], 2);
+    train_err(ipct) = sum(category_ids ~= train_labels) / sum(m_train);
     
 end
 
 % plot training error and test set error 
 figure('Color', 'w');
-plot(train_pct, [test_err_m3; train_err_m3], 'LineWidth', 1.5);
+plot(train_pct, [test_err; train_err], 'LineWidth', 1.5);
 grid on; xlabel('Percent of Data Used for Training'); ylabel('Error');
 set(gca, 'FontSize', 11);
 legend({'Test Error', 'Training Error'}, 'FontSize', 10);
 title(title_str);
+ylim([0, 0.4]);
 
 
-function [m3_mat, m4_mat, title_str] = proc_time_features(m3_features, m4_features)
-% weed out some data points (or not)
-title_str = 'Logistic Regression';
-% test_case = 3;
-% switch test_case
-%     case 1
-%         max_data_age = 60; % use only first 60 days of data
-%         title_str = [title_str, sprintf(', %d days', max_data_age)];
-%     case 2
-%         max_data_age = 95; % first 95 days
-%         title_str = [title_str, sprintf(', %d days', max_data_age)];
-%     case 3
-%         max_data_age = Inf; % all the data
-% end
-% inds = m3_features.time_delta_days <= max_data_age;
-% m3_features = filter_struct(m3_features, inds);
-% inds = m4_features.time_delta_days <= max_data_age;
-% m4_features = filter_struct(m4_features, inds);
+function [feature_data, labels, m, title_str] = proc_time_features(feature_data)
+do_reordering = false; 
 
-% reformat for use in learning algorithms
-% first remove time stamp features
-m3_features = remove_time_stamp(m3_features);
-m4_features = remove_time_stamp(m4_features);
-% then restructure
-m3_mat = struct2mat(m3_features);
-m4_mat = struct2mat(m4_features);
-% % reorder rows to mix up data (so training and test sets will include a
-% % variety of data)
-% title_str = [title_str, ' (with Reordering)'];
-% m = [size(m3_mat, 1); size(m4_mat, 1)];
-% reorder_inds = reshape(1:floor(m(1)/3)*3, [], 3)';
-% m3_mat = m3_mat([reorder_inds(:); (floor(m(1)/3)*3:m(1))'], :);
-% reorder_inds = reshape(1:floor(m(2)/3)*3, [], 3)';
-% m4_mat = m4_mat([reorder_inds(:); (floor(m(2)/3)*3:m(2))'], :);
+% m = # of training examples, broken out by class; sum(m) = total examples
+m = zeros(numel(feature_data), 1); 
+labels = [];
+for icat = 1:numel(feature_data)
+    % first remove time stamp features
+    feature_data{icat} = remove_time_stamp(feature_data{icat});
+    % reformat for use in learning algorithms
+    feature_data{icat} = struct2mat(feature_data{icat});
+    % tack on labels
+    m(icat) = size(feature_data{icat}, 1);
+    if do_reordering
+        reorder_inds = reshape(1:floor(m(icat)/3)*3, [], 3)';
+        feature_data{icat} = feature_data{icat}([reorder_inds(:); 
+            (floor(m(icat)/3)*3+1:m(icat))'], :);
+    end
+    labels = [labels; icat*ones(m(icat), 1)];
+end
+feature_data = vertcat(feature_data{:});
 
+% reorder rows to mix up data (so training and test sets will include a
+% variety of data)
+title_str = 'Logistic Regression, Time Domain';
+if do_reordering
+    title_str = [title_str, ' (with Reordering)'];
+end
 
+function [feature_data, labels, m, n_cats, title_str] = ...
+    proc_freq_features(data, n_features)
+do_reordering = false; 
+
+% assume features are ranked in descending order of correlation
+% throw away features that are more than how many we want
+feature_data = data(:, 1:n_features);
+labels = data(:, end);
+n_cats = numel(unique(labels));
+m = zeros(n_cats, 1);
+start_ind = 0;
+for icat = 1:n_cats
+    m(icat) = sum(labels == icat);
+    % depending on do_reordering flag, either skip the rest, or reorder
+    if ~do_reordering, continue; end
+    reorder_inds = reshape(1:floor(m(icat)/3)*3, [], 3)' + start_ind;
+    leftover_inds = (floor(m(icat)/3)*3+1:m(icat))' + start_ind;
+    feature_data(start_ind + (1:m(icat)), :) = ...
+        feature_data([reorder_inds(:); leftover_inds], :);
+    start_ind = sum(m(1:icat));
+end
+title_str = 'Logistic Regression, Frequency Domain';
+if do_reordering
+    title_str = [title_str, ' (with Reordering)'];
+end
 
