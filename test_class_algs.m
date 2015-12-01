@@ -31,7 +31,7 @@ test_labels = labels(test_inds);
 
 test_err = zeros(1, numel(train_pct)); % initialize error (to be calculated later)
 train_err = test_err; 
-for ipct = 1:numel(train_pct) % loop over size of training set used
+for ipct = numel(train_pct) % loop over size of training set used
     m_train = floor(m * train_pct(ipct)); % # examples for training changes
     train_inds = [];
     start_ind = 0;
@@ -59,12 +59,26 @@ for ipct = 1:numel(train_pct) % loop over size of training set used
         figure('Color', 'w');
         plot(pihat, '*'); hold on; xlim([0, numel(test_labels)]);
         for idiv = 1:n_cats-1
-            plot(sum(m_test(1:idiv))*[1, 1], [0, 1], 'k--', 'LineWidth', 1.5);
+            plot(sum(m_test(1:idiv))*[1, 1], [0, 1], 'k', 'LineWidth', 1);
         end
         legend({'M1', 'M3', 'M4', 'SN41'}, 'FontSize', 10);
         set(gca, 'FontSize', 11);
         grid on; xlabel('Sample #'); ylabel('Likelihood');
         title(title_str);
+        set(gcf, 'Name', 'Logistic Regression');
+        
+        % plot classification results on test set
+        figure('Color', 'w');
+        plot(category_ids, 'b*'); hold on; 
+        xlim([0, numel(test_labels)]);
+        y = [0.5, n_cats+0.5];
+        ylim(y);
+        for idiv = 1:n_cats-1
+            plot(sum(m_test(1:idiv))*[1, 1], y, 'k', 'LineWidth', 0.75);
+        end
+        set(gca, 'YTick', 1:n_cats, 'YTickLabel', {'M1', 'M3', 'M4', 'SN41'});
+        set(gca, 'FontSize', 11);
+        xlabel('Sample #');
         set(gcf, 'Name', 'Logistic Regression');
     end
 %     % plot coefficients found by lasso GLM
